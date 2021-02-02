@@ -1,0 +1,88 @@
+## Path Planning Project Writeup 
+
+---
+
+**Path Planning Project**
+
+The goals / steps of this project are the following:
+
+* The car is able to drive at least 4.32 miles without incident.
+* The car drives according to the speed limit.
+* Max Acceleration and Jerk are not Exceeded. 
+* Car does not have collisions.
+* The car stays in its lane, except for the time between changing lanes.
+* The car is able to change lanes
+
+## [Rubric](https://review.udacity.com/#!/rubrics/1971/view) Points
+
+## Here I will consider the rubric points individually and describe how I addressed the problem
+
+---
+
+## Problem approach
+
+### How I would drive
+
+First, when facing this problem I think of how I would drive in this situation. In my case, I would stay in the center lane unless I need
+to pass another car. Here I would try to stay near the limit speed (50 MPH). If I approach another car, slower than me, I would slow down and
+try a lange change to pass the car. After that I would return to the center lane. All of these while I keep in mind all the Rubric points.
+
+### Previous path
+
+As mentioned in "Getting started" class, there may be a previous path of waypoints. First, I will check all the previous waypoints and add them to
+the vector next_x_vals and next_y_vals.
+I will follow the Structure from "More Complex Paths" example.
+* Code line from 108 to 113 is the loop for adding previous waypoints
+* Code line from 114 to 119 is to check if there is actually previous waypoints. If not I set the starting point where my car is.
+* Code line from 120 to 128 If there are previous waypoints, I will assign the last and the one before last to x, y and x2, y2 variables
+
+With these settings, I have what I need to make the car move.
+
+### Behaviour Planning
+
+As suggested in the classes, I will implement 5 behaviours,
+* Keep Lane
+* Lane change left
+* Lane change right
+* Prepare Lane Change Left
+* Prepare Lane Change Right
+
+* In Keep lane State, I will stay in the middle lane near 50 MPH. If I detect a car in front of my coming closer, I will start Prepare lane change left
+* In Prepare lane change left, I will slow down until the same speed of the car ahead. If There is no car on the left, I will start Change Lane left, if not I will wait
+* For the lane change left, I will do a smooth transition from the middle lane to the left lane, accelerating slowly. When I am in the left lane, I will start the Keep Lane state.
+* In the left Lane I will accelerate to the speed limit unless there is another car going slower. When the middle lane is free again, I will begin Prepare lane change right.
+* Same as prepare to lane change left, I will mantain my speed until there is no car to the right, and then begin Lane change Right.
+* For lane change right, I will do a smooth transition to the right until I am back to the middle lane 
+
+I will create a method for each behaviour in helpers.h
+
+## My code
+
+### First implementation
+First, I want to test the car movement. My first code will be to make the car follow the center lane at constant speed.
+My first approach was to get the S value of the car, and just add small spaces until I got 50 points. D is still 6 (This is for the center lane).
+The code somewhat "worked", but the car movement was sloppy and irregular. This was due to the fact that the car yaw rate is limited, and when I put waypoints off the max yaw rate the car movement is sloppy.
+
+One suggest approach for this problem is to use the SPLINE.H library, which wil help to create a trajectory for the car to follow.
+In the "more complex paths" class, there is a really good example that I will follow for the X, Y conversion to possible S and D values.
+## [More complex paths](https://classroom.udacity.com/nanodegrees/nd013/parts/01a340a5-39b5-4202-9f89-d96de8cf17be/modules/1dc566d7-03d4-40da-af2c-b8ec85f2e4dd/lessons/407a2efa-3383-480f-9266-5981440b09b3/concepts/66b03ee0-8e28-4a20-a1b2-690801d57d06)
+
+Now, that I have a smooth car movement, is time to program the car logic. I need the next steps to complete the rubric:
+
+* 1) If no car ahead of us, the car will go at almost max speed (Keep lane state)
+* 2) If there is a car ahead, the car will slow down and prepare for lane change (Prepare for lane change state)
+* 3) In the prepare for lane change, I will check cars to my left and right. If there are no cars to my left, I will do a lane change to the left (LCL). If there are cars to my left, I will try a lane change to the right. (LCR)
+* 4) If both left and right lanes have cars, I will remain in the Prepare for lane change state until there are no cars in either lane.
+
+I implemented three functions in the helpers.h header for checking cars in front of the car, and functions to check cars in the left and right lane.
+* check cars in front Code line 159
+* check cars in left lane Code line 189
+* check cars in right lane Code line  222
+
+In the look left and look right functions, I tried using the euclidean distance between my car, and the cars detected by the sensor that were in the lane to the left and right of my car. Maybe another approach would be more efficient.
+
+## Discussion
+
+#### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
+
+This project was really fun. Using the spline Library was a little confusing, but the Q&A video for this project was extremely useful. After implementing the spline method, it was really easy to program different car movements. I think using other car speeds can help me to do more "risky" maneuvers that can make a safe lane change depending on how fast or slow a car in another lane is moving. Also, there are some times where doing a lane change results in going slower due to heavy traffic ahead in that lane. Maybe this could be prevented by observing cars ahead in the lane I want to move on and try to predict wheter it is better to stay in lane or the do a lane change.
